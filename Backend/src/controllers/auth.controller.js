@@ -110,7 +110,10 @@ async function getMeController(req, res) {
 
     const user = await userModel.findById(req.user.id)
 
-
+    if (!user) {
+    res.clearCookie("token")
+    return res.status(401).json({ message: "User not found. Please login again." })
+}
 
     res.status(200).json({
         message: "User details fetched successfully",

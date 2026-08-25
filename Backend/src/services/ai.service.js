@@ -50,17 +50,25 @@ async function generateInterviewReport({ resume, selfDescription, jobDescription
         Keep the answers concise and practical. Do not generate unnecessarily long explanations.
 
 `
+    try{
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json", //response generated will be in json format
+                responseSchema: z.toJSONSchema(interviewReportSchema, { target: "openapi-3.0" }), //json will follow this schema
+            }
+        })
 
-    const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json", //response generated will be in json format
-            responseSchema: zodToJsonSchema(interviewReportSchema), //json will follow this schema
+        return JSON.parse(response.text)
+    } catch (err){
+        if (err?.status === 503 || err?.message?.includes("UNAVAILABLE")) {
+            const e = new Error("AI service is temporarily overloaded. Please try again in a moment.")
+            e.statusCode = 503
+            throw e
         }
-    })
-
-    return JSON.parse(response.text)
+        throw err
+    }
 
 }
 
